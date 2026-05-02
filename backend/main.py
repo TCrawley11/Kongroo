@@ -16,6 +16,8 @@ frontend_url = os.environ.get("FRONTEND_URL", "*").strip()
 
 if frontend_url == "*":
     cors_kwargs = {"allow_origin_regex": ".*"}
+elif frontend_url.startswith("regex:"):
+    cors_kwargs = {"allow_origin_regex": frontend_url[len("regex:"):]}
 else:
     origins = [o.strip().rstrip("/") for o in frontend_url.split(",") if o.strip()]
     cors_kwargs = {"allow_origins": origins}
