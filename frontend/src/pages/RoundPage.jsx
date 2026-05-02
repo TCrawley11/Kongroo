@@ -39,6 +39,7 @@ export default function RoundPage() {
   const [phase, setPhase] = useState('playing')
   const [panelIndex, setPanelIndex] = useState(0)
   const [timeLeft, setTimeLeft] = useState(30)
+  const [panelImages, setPanelImages] = useState([])
 
   const wsRef = useRef(null)
   const feedEndRef = useRef(null)
@@ -119,6 +120,41 @@ export default function RoundPage() {
     feedEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [submissions])
 
+  useEffect(() => {
+    if (phase !== 'done' || submissions.length === 0) return
+    const apiBase = (import.meta.env.VITE_API_URL ?? '').replace(/\/+$/, '')
+    const urls = []
+    let cancelled = false
+
+    const fetchPanel = async (idx) => {
+      const cumulative = submissions.slice(0, idx + 1).map(s => s.text).join(' ')
+      try {
+        const res = await fetch(`${apiBase}/api/generate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ story_text: cumulative }),
+        })
+        if (!res.ok) return
+        const blob = await res.blob()
+        const url = URL.createObjectURL(blob)
+        if (cancelled) { URL.revokeObjectURL(url); return }
+        urls[idx] = url
+        setPanelImages(prev => {
+          const next = [...prev]
+          next[idx] = url
+          return next
+        })
+      } catch {}
+    }
+
+    submissions.forEach((_, i) => fetchPanel(i))
+
+    return () => {
+      cancelled = true
+      urls.forEach(u => u && URL.revokeObjectURL(u))
+    }
+  }, [phase, submissions])
+
   const submitSentence = () => {
     const trimmed = text.trim()
     if (!trimmed || overLimit || wsRef.current?.readyState !== WebSocket.OPEN) return
@@ -133,6 +169,7 @@ export default function RoundPage() {
     const { bg, accent } = PLAYER_COLORS[(pIdx >= 0 ? pIdx : panelIndex) % PLAYER_COLORS.length]
     const isFirst = panelIndex === 0
     const isLast = panelIndex === submissions.length - 1
+    const imgUrl = panelImages[panelIndex]
 
     return (
       <div className="round round--playback" style={{ background: `linear-gradient(160deg, ${bg} 0%, #fff8 100%)` }}>
@@ -148,7 +185,15 @@ export default function RoundPage() {
             ))}
           </div>
 
-          <KangarooIcon accent={accent} />
+          <div className="round__panel-image-wrap" style={{ borderColor: accent }}>
+            {imgUrl ? (
+              <img src={imgUrl} alt="" className="round__panel-image" />
+            ) : (
+              <div className="round__panel-image-loading" style={{ color: accent }}>
+                Painting the scene…
+              </div>
+            )}
+          </div>
 
           <p className="round__panel-author" style={{ color: accent }}>
             {panel?.player_name}
