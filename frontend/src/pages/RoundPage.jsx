@@ -294,7 +294,7 @@ export default function RoundPage() {
                 {submissions.length === 0 && (
                   <p className="round__feed-empty">The story begins here…</p>
                 )}
-                {submissions.map((s, i) => {
+                {(isMyTurn ? submissions.slice(-1) : submissions).map((s, i) => {
                   const idx = players.findIndex(p => p.player_id === s.player_id)
                   const { bg, accent } = PLAYER_COLORS[(idx >= 0 ? idx : i) % PLAYER_COLORS.length]
                   return (
