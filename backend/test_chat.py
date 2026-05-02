@@ -71,12 +71,15 @@ def main():
                 ),
             )
 
-            # Check for image in response
+            # Check for candidate and content
+            candidate = response.candidates[0]
             image_data = None
-            for part in response.candidates[0].content.parts:
-                if part.inline_data:
-                    image_data = part.inline_data.data
-                    break
+            
+            if candidate.content and candidate.content.parts:
+                for part in candidate.content.parts:
+                    if part.inline_data:
+                        image_data = part.inline_data.data
+                        break
             
             if image_data:
                 filename = f"chat_turn_{turn}.png"
@@ -84,15 +87,23 @@ def main():
                     f.write(image_data)
                 print(f"✅ Success! Image saved as '{filename}'")
                 
-                # Add model's response (containing the image) back to history 
-                # so it has context for the next turn.
-                history.append(response.candidates[0].content)
+                # Add model's response back to history 
+                history.append(candidate.content)
                 turn += 1
             else:
-                print("⚠️  No image returned. Response content:")
-                print(response.candidates[0].content)
-                # Still add it to history to maintain conversation flow
-                history.append(response.candidates[0].content)
+                print(f"⚠️  No image returned. Finish reason: {candidate.finish_reason}")
+                if candidate.safety_ratings:
+                    blocked = [r for r in candidate.safety_ratings if r.blocked]
+                    if blocked:
+                        print(f"🚫 Safety block triggered: {blocked}")
+                
+                # If there's content but no image (e.g. model sent text instead)
+                if candidate.content:
+                    history.append(candidate.content)
+                else:
+                    # If content is None, we need to decide how to handle history.
+                    # Usually, we shouldn't append None to history as it might break the next call.
+                    print("❌ Response blocked or empty. Not adding to history.")
 
         except KeyboardInterrupt:
             print("\nExiting...")
