@@ -327,12 +327,6 @@ export default function RoundPage() {
                     >
                       {words} / 20 words{overLimit && ' — too long!'}
                     </span>
-                    <span
-                      className="round__timer"
-                      style={{ color: myColor.accent, opacity: timeLeft <= 10 ? 1 : 0.45, fontWeight: timeLeft <= 10 ? 700 : 500 }}
-                    >
-                      {timeLeft}s
-                    </span>
                     <div className="round__done-wrap" style={{ borderColor: myColor.accent }}>
                       <button
                         className="round__done"
@@ -360,6 +354,42 @@ export default function RoundPage() {
               )}
             </div>
 
+          </div>
+
+          <div
+            className="round__timer-clock round__timer-clock--below"
+            style={{ color: currentPlayerColor.accent, opacity: currentPlayerId ? 1 : 0 }}
+          >
+            <svg width="56" height="56" viewBox="0 0 36 36">
+              <circle
+                cx="18"
+                cy="18"
+                r="15"
+                fill="none"
+                stroke={currentPlayerColor.accent}
+                strokeOpacity="0.2"
+                strokeWidth="3"
+              />
+              <circle
+                cx="18"
+                cy="18"
+                r="15"
+                fill="none"
+                stroke={currentPlayerColor.accent}
+                strokeWidth="3"
+                strokeLinecap="round"
+                strokeDasharray={2 * Math.PI * 15}
+                strokeDashoffset={2 * Math.PI * 15 * (1 - timeLeft / 30)}
+                transform="rotate(-90 18 18)"
+                style={{ transition: 'stroke-dashoffset 1s linear' }}
+              />
+            </svg>
+            <span
+              className="round__timer-num"
+              style={{ fontWeight: timeLeft <= 10 ? 700 : 600 }}
+            >
+              {timeLeft}
+            </span>
           </div>
 
           <p className="round__footer-tagline">Turn-based visual novel maker</p>

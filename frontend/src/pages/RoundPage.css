@@ -108,15 +108,12 @@ body:has(.round) #root {
   align-self: stretch;
   border-radius: 100px 4px 4px 100px;
   box-sizing: border-box;
-  transition: box-shadow 0.25s;
+  opacity: 0.3;
+  transition: opacity 0.25s;
 }
 
 .round__player-card--turn {
-  box-shadow: 0 0 0 3px #62043766, 0 4px 16px #62043733;
-}
-
-.round__player-card--done {
-  opacity: 0.6;
+  opacity: 1;
 }
 
 .round__player-name {
@@ -129,9 +126,13 @@ body:has(.round) #root {
   text-overflow: ellipsis;
 }
 
-.round__player-check,
-.round__player-arrow {
+.round__player-check {
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+.round__player-arrow {
+  font-size: 36px;
   flex-shrink: 0;
 }
 
@@ -230,6 +231,38 @@ body:has(.round) #root {
   font-family: 'Geologica', system-ui, sans-serif;
   font-size: 14px;
   transition: opacity 0.3s, font-weight 0.3s;
+}
+
+.round__timer-clock {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+}
+
+.round__timer-clock--below {
+  width: 56px;
+  height: 56px;
+  align-self: center;
+  margin-top: 8px;
+}
+
+.round__timer-num {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 13px;
+  letter-spacing: -0.3px;
+  transition: font-weight 0.3s;
+}
+
+.round__timer-clock--below .round__timer-num {
+  font-size: 18px;
 }
 
 .round__done-wrap {
