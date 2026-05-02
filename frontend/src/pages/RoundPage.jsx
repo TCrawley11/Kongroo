@@ -364,17 +364,18 @@ export default function RoundPage() {
 
           </div>
 
+          {isMyTurn && (
           <div
             className="round__timer-clock round__timer-clock--below"
-            style={{ color: currentPlayerColor.accent, opacity: currentPlayerId ? 1 : 0 }}
+            style={{ color: myColor.accent }}
           >
-            <svg width="56" height="56" viewBox="0 0 36 36">
+            <svg width="96" height="96" viewBox="0 0 36 36">
               <circle
                 cx="18"
                 cy="18"
                 r="15"
                 fill="none"
-                stroke={currentPlayerColor.accent}
+                stroke={myColor.accent}
                 strokeOpacity="0.2"
                 strokeWidth="3"
               />
@@ -383,7 +384,7 @@ export default function RoundPage() {
                 cy="18"
                 r="15"
                 fill="none"
-                stroke={currentPlayerColor.accent}
+                stroke={myColor.accent}
                 strokeWidth="3"
                 strokeLinecap="round"
                 strokeDasharray={2 * Math.PI * 15}
@@ -399,6 +400,7 @@ export default function RoundPage() {
               {timeLeft}
             </span>
           </div>
+          )}
 
           <p className="round__footer-tagline">Turn-based visual novel maker</p>
         </div>

@@ -243,8 +243,8 @@ body:has(.round) #root {
 }
 
 .round__timer-clock--below {
-  width: 56px;
-  height: 56px;
+  width: 96px;
+  height: 96px;
   align-self: center;
   margin-top: 8px;
 }
@@ -262,7 +262,8 @@ body:has(.round) #root {
 }
 
 .round__timer-clock--below .round__timer-num {
-  font-size: 18px;
+  font-size: 30px;
+  letter-spacing: -0.6px;
 }
 
 .round__done-wrap {
