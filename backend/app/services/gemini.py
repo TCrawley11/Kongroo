@@ -1,8 +1,7 @@
 import os
 from google import genai
 from google.genai import types
-
-IMAGE_MODEL = "gemini-3.1-flash-image-preview"
+from app.core.config import settings
 
 _client: genai.Client | None = None
 
@@ -40,7 +39,7 @@ async def generate_scene_image(story_text: str) -> bytes:
     prompt = build_image_prompt(story_text)
 
     response = client.models.generate_content(
-        model=IMAGE_MODEL,
+        model=settings.gemini.model_id,
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=VISUAL_NOVEL_SYSTEM_PROMPT,

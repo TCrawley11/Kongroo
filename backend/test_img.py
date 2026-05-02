@@ -2,8 +2,6 @@ import sys
 import os
 import time
 from fastapi.testclient import TestClient
-import io
-from PIL import Image
 
 # Ensure we can import from the current directory
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -44,9 +42,7 @@ def run_test():
             f.write(response.content)
         print("📂 Result saved to: backend/test_output.png")
         
-        # Open the image to check dimensions
-        img = Image.open(io.BytesIO(response.content))
-        print(f"🖼️  Generated Image: {img.size[0]}x{img.size[1]} {img.format}")
+        print(f"🖼️  Generated Image: {len(response.content)} bytes")
     else:
         print(f"❌ FAILED (Status {response.status_code})")
         print(f"Error Detail: {response.text}")
