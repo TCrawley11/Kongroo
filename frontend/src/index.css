@@ -11,6 +11,12 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  --slot-empty-bg: rgba(244, 243, 236, 0.4);
+  --slot-active-bg: rgba(170, 59, 255, 0.04);
+  --slot-filled-bg: rgba(244, 243, 236, 0.25);
+  --input-bg: #fff;
+  --image-placeholder-bg: rgba(244, 243, 236, 0.6);
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -43,10 +49,12 @@
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
+    --slot-empty-bg: rgba(30, 31, 40, 0.6);
+    --slot-active-bg: rgba(192, 132, 252, 0.06);
+    --slot-filled-bg: rgba(30, 31, 40, 0.8);
+    --input-bg: #1f2028;
+    --image-placeholder-bg: rgba(30, 31, 40, 0.9);
   }
 }
 
@@ -57,9 +65,8 @@ body {
 #root {
   width: 1126px;
   max-width: 100%;
-  margin: 0 auto;
+  margin: 0;
   text-align: center;
-  border-inline: 1px solid var(--border);
   min-height: 100svh;
   display: flex;
   flex-direction: column;
