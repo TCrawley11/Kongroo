@@ -7,7 +7,7 @@ export default function NamePicker({ value, onChange }) {
         id="author-name"
         className="name-picker__input"
         type="text"
-        placeholder="e.g. Anya, Marco, Suki…"
+        placeholder="HuskyHacker23..."
         value={value}
         onChange={(e) => onChange(e.target.value)}
         maxLength={32}
