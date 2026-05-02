@@ -1,10 +1,14 @@
 import os
+import base64
+import json
 from google import genai
 from google.genai import types
 
-IMAGE_MODEL = "gemini-3.1-flash-image-preview"
+MODEL_NAME = "gemini-3.1-flash-image-preview"
 
 _client: genai.Client | None = None
+# In-memory session store: maps UUID to chat history
+_session_histories: dict[str, list[types.Content]] = {}
 
 
 def get_client() -> genai.Client:
@@ -17,39 +21,75 @@ def get_client() -> genai.Client:
     return _client
 
 
-VISUAL_NOVEL_SYSTEM_PROMPT = """\
-You are a visual novel scene artist. Given a collaborative story written by multiple players, \
-produce a single evocative scene illustration in a Japanese visual novel style: \
-anime-influenced linework, painterly backgrounds, cinematic lighting, rich atmospheric color. \
-The image should feel like a still frame from a professional visual novel — \
-expressive and emotionally resonant with the story's current tone. \
-Do NOT render any text, speech bubbles, or UI elements inside the image itself.\
+SYSTEM_PROMPT = """\
+You are a Visual Novel director and artist. Given a concise scene prompt from the user, your job is to:
+1. Elaborate on the visual description for the scene. 
+2. Write the dialogue or narration text to display on the screen.
+3. Generate a single evocative scene illustration in a Japanese visual novel anime style.
+
+You must maintain strict continuity with the previous scenes in the chat history (characters, setting, tone).
+The illustration should have anime-influenced linework, painterly backgrounds, and cinematic lighting. 
+Do NOT render any text, speech bubbles, or UI elements inside the image.
+
+Your response must contain:
+- A text part: A JSON object with exactly two fields: "elaborated_image_description" and "dialogue_text".
+- An image part: The generated illustration for the scene.
 """
 
 
-def build_image_prompt(story_text: str) -> str:
-    return (
-        "Create a visual novel scene illustration for the following collaborative story. "
-        "Capture the setting, mood, and key dramatic moment described.\n\n"
-        f"Story:\n{story_text}"
-    )
-
-
-async def generate_scene_image(story_text: str) -> bytes:
+async def generate_scene_image(uuid: str, concise_prompt: str) -> dict:
     client = get_client()
-    prompt = build_image_prompt(story_text)
 
-    response = client.models.generate_content(
-        model=IMAGE_MODEL,
-        contents=prompt,
+    # Get or initialize history for this session
+    if uuid not in _session_histories:
+        _session_histories[uuid] = []
+    history = _session_histories[uuid]
+
+    # Single Turn: Combined Text and Image Generation
+    chat = client.chats.create(
+        model=MODEL_NAME,
         config=types.GenerateContentConfig(
-            system_instruction=VISUAL_NOVEL_SYSTEM_PROMPT,
-            response_modalities=["IMAGE"],
+            system_instruction=SYSTEM_PROMPT,
+            response_modalities=["TEXT", "IMAGE"],
         ),
+        history=history
     )
 
+    response = chat.send_message(concise_prompt)
+    
+    dialogue_text = None
+    image_bytes = None
+    
+    # Iterate through parts to find both JSON and Image
     for part in response.candidates[0].content.parts:
-        if part.inline_data is not None:
-            return part.inline_data.data
+        if part.text:
+            try:
+                # Clean up markdown code blocks if present in the text part
+                text_clean = part.text.strip()
+                if text_clean.startswith("```json"):
+                    text_clean = text_clean[7:-3].strip()
+                elif text_clean.startswith("```"):
+                    text_clean = text_clean[3:-3].strip()
+                
+                data = json.loads(text_clean)
+                dialogue_text = data.get("dialogue_text")
+            except (json.JSONDecodeError, KeyError):
+                # Fallback if the model didn't return perfect JSON
+                dialogue_text = part.text
+        
+        if part.inline_data:
+            image_bytes = part.inline_data.data
 
-    raise ValueError("Gemini returned no image in its response")
+    if not dialogue_text:
+        dialogue_text = "..." # Fallback
+    
+    if not image_bytes:
+        raise ValueError("Gemini returned no image in its response")
+
+    # Update persistent history from the chat session
+    _session_histories[uuid] = chat.history
+
+    return {
+        "dialogue_text": dialogue_text,
+        "image_base64": base64.b64encode(image_bytes).decode("utf-8")
+    }
