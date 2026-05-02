@@ -3,7 +3,8 @@ import tomllib
 from pydantic import BaseModel
 
 class GeminiSettings(BaseModel):
-    model_id: str = "gemini-2.0-flash-exp"
+    text_model_id: str = "gemini-2.5-flash-image"
+    image_model_id: str = "gemini-3.1-flash-lite-preview"
 
 class Settings(BaseModel):
     gemini: GeminiSettings = GeminiSettings()

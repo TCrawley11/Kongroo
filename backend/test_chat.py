@@ -1,5 +1,7 @@
 import os
 import sys
+import json
+from pydantic import BaseModel
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
@@ -11,21 +13,33 @@ from app.core.config import settings
 
 load_dotenv()
 
-VISUAL_NOVEL_SYSTEM_PROMPT = """\
-You are a visual novel scene artist. Given a collaborative story written by multiple players, \
-produce a single evocative scene illustration in a Japanese visual novel style: \
-anime-influenced linework, painterly backgrounds, cinematic lighting, rich atmospheric color. \
-The image should feel like a still frame from a professional visual novel — \
-expressive and emotionally resonant with the story's current tone. \
-Do NOT render any text, speech bubbles, or UI elements inside the image itself.\
+class DialoguePart(BaseModel):
+    character: str
+    text: str
+
+class SceneOutput(BaseModel):
+    description: str
+    dialogue: list[DialoguePart]
+
+# Two different specialized system instructions
+WRITER_SYSTEM_PROMPT = """\
+You are a professional visual novel writer. For the given story segment, write an evocative 1-2 sentence scene description and a list of character dialogue parts.
+Output ONLY a raw JSON object (no markdown) with the following structure:
+{
+  "description": "scene description",
+  "dialogue": [
+    {"character": "Name", "text": "What they said"},
+    ...
+  ]
+}
+If no one speaks, the dialogue list should be empty.\
 """
 
-def build_image_prompt(story_text: str) -> str:
-    return (
-        "Create a visual novel scene illustration for the following collaborative story. "
-        "Capture the setting, mood, and key dramatic moment described.\n\n"
-        f"Story:\n{story_text}"
-    )
+ARTIST_SYSTEM_PROMPT = """\
+You are a visual novel scene artist. Produce a single evocative scene illustration in a Japanese visual novel style.
+Anime-influenced linework, painterly backgrounds, cinematic lighting, rich atmospheric color.
+Do NOT render any text, speech bubbles, or UI elements inside the image itself.\
+"""
 
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -34,15 +48,20 @@ def main():
         return
 
     client = genai.Client(api_key=api_key)
-    model_id = settings.gemini.model_id
     
-    print(f"🚀 Starting Kongroo Chat Session")
-    print(f"🤖 Model: {model_id}")
-    print(f"📝 System Instruction: Visual Novel Artist")
+    # Using the IDs exactly as defined in config.toml
+    text_model = settings.gemini.text_model_id
+    image_model = settings.gemini.image_model_id
+    
+    print(f"🚀 Starting Kongroo Dual-Model Chat Session")
+    print(f"📝 Writer Model: {text_model}")
+    print(f"🎨 Artist Model: {image_model}")
     print("-" * 40)
     print("Type 'exit' or 'quit' to stop.")
 
-    history = []
+    # Two separate histories as requested
+    writer_history = []
+    artist_history = []
     turn = 1
 
     while True:
@@ -53,27 +72,57 @@ def main():
             if not prompt.strip():
                 continue
 
-            # Add wrapped user prompt to history
-            wrapped_prompt = build_image_prompt(prompt)
-            history.append(types.Content(
-                role="user",
-                parts=[types.Part(text=wrapped_prompt)]
-            ))
-
-            print(f"⏳ Generating image for turn {turn}...")
+            # --- STEP 1: GENERATE TEXT (The Writer) ---
+            print(f"✍️  Writing scene narrative...")
             
-            response = client.models.generate_content(
-                model=model_id,
-                contents=history,
+            # Add user prompt to Writer's history
+            writer_history.append(types.Content(role="user", parts=[types.Part(text=prompt)]))
+            
+            response_text = client.models.generate_content(
+                model=text_model,
+                contents=writer_history,
                 config=types.GenerateContentConfig(
-                    system_instruction=VISUAL_NOVEL_SYSTEM_PROMPT,
+                    system_instruction=WRITER_SYSTEM_PROMPT,
+                ),
+            )
+
+            text_part = response_text.text if response_text.text else ""
+            scene_text = None
+            try:
+                # Clean up potential markdown wrapper
+                clean_json = text_part.strip().replace("```json", "").replace("```", "").strip()
+                data = json.loads(clean_json)
+                scene_text = SceneOutput(**data)
+            except Exception as e:
+                # Fallback: create a dummy object so we can proceed
+                scene_text = SceneOutput(description=text_part[:200] if text_part else "No description", dialogue=[])
+
+            print(f"\n🎬 DESCRIPTION: {scene_text.description}")
+            if scene_text.dialogue:
+                print("💬 DIALOGUE:")
+                for d in scene_text.dialogue:
+                    print(f"   [{d.character}]: {d.text}")
+            else:
+                print("💬 DIALOGUE: (None)")
+
+            # --- STEP 2: GENERATE IMAGE (The Artist) ---
+            print(f"🎨 Painting scene illustration...")
+            
+            # The Artist's input is the description generated by the Writer
+            artist_prompt = f"Illustrate this scene: {scene_text.description}"
+            artist_history.append(types.Content(role="user", parts=[types.Part(text=artist_prompt)]))
+            
+            response_image = client.models.generate_content(
+                model=image_model,
+                contents=artist_history,
+                config=types.GenerateContentConfig(
+                    system_instruction=ARTIST_SYSTEM_PROMPT,
                     response_modalities=["IMAGE"],
                 ),
             )
 
-            # Check for candidate and content
-            candidate = response.candidates[0]
             image_data = None
+            candidate = response_image.candidates[0]
             
             if candidate.content and candidate.content.parts:
                 for part in candidate.content.parts:
@@ -85,25 +134,35 @@ def main():
                 filename = f"chat_turn_{turn}.png"
                 with open(filename, "wb") as f:
                     f.write(image_data)
-                print(f"✅ Success! Image saved as '{filename}'")
+                print(f"🖼️  IMAGE: Saved as '{filename}'")
                 
-                # Add model's response back to history 
-                history.append(candidate.content)
+                # Add the Artist's response to their own history
+                artist_history.append(candidate.content)
+                
+                # IMPORTANT: Give the image back to the WRITER'S history 
+                # for context in the next turn.
+                writer_history.append(types.Content(role="model", parts=[
+                    types.Part(text=text_part),
+                    types.Part(inline_data=types.Blob(mime_type="image/png", data=image_data))
+                ]))
                 turn += 1
             else:
-                print(f"⚠️  No image returned. Finish reason: {candidate.finish_reason}")
-                if candidate.safety_ratings:
-                    blocked = [r for r in candidate.safety_ratings if r.blocked]
-                    if blocked:
-                        print(f"🚫 Safety block triggered: {blocked}")
+                print(f"⚠️  No image returned.")
+                print(f"  - Finish reason: {candidate.finish_reason}")
                 
-                # If there's content but no image (e.g. model sent text instead)
+                if candidate.safety_ratings:
+                    print("  - Safety ratings (blocked/high only):")
+                    for rating in candidate.safety_ratings:
+                        if hasattr(rating, 'blocked') and (rating.blocked or rating.probability != "NEGLIGIBLE"):
+                            print(f"    🚫 {rating.category}: {rating.probability}")
+                
+                # Add just the text to histories so we don't lose sequence
+                writer_history.append(types.Content(role="model", parts=[types.Part(text=text_part)]))
                 if candidate.content:
-                    history.append(candidate.content)
+                    artist_history.append(candidate.content)
                 else:
-                    # If content is None, we need to decide how to handle history.
-                    # Usually, we shouldn't append None to history as it might break the next call.
-                    print("❌ Response blocked or empty. Not adding to history.")
+                    # If model returned nothing, add a dummy part to keep history roles alternating
+                    artist_history.append(types.Content(role="model", parts=[types.Part(text="[Image generation failed]")]))
 
         except KeyboardInterrupt:
             print("\nExiting...")

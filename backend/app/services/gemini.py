@@ -39,7 +39,7 @@ async def generate_scene_image(story_text: str) -> bytes:
     prompt = build_image_prompt(story_text)
 
     response = client.models.generate_content(
-        model=settings.gemini.model_id,
+        model=settings.gemini.image_model_id,
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=VISUAL_NOVEL_SYSTEM_PROMPT,
