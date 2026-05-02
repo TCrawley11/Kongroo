@@ -292,10 +292,17 @@ export default function RoundPage() {
             {/* Story feed + write area */}
             <div className="round__game-col" style={{ borderColor: isMyTurn ? myColor.accent : currentPlayerColor.accent }}>
               <div className="round__story-feed">
-                {submissions.length === 0 && (
-                  <p className="round__feed-empty">The story begins here…</p>
+                {!isMyTurn && (
+                  <p className="round__feed-empty">
+                    {submissions.length === 0
+                      ? 'The story begins here…'
+                      : 'The story is unfolding… you’ll see it all at the end.'}
+                  </p>
                 )}
-                {(isMyTurn ? submissions.slice(-1) : submissions).map((s, i) => {
+                {isMyTurn && submissions.length === 0 && (
+                  <p className="round__feed-empty">You start the story!</p>
+                )}
+                {isMyTurn && submissions.slice(-1).map((s, i) => {
                   const idx = players.findIndex(p => p.player_id === s.player_id)
                   const { bg, accent } = PLAYER_COLORS[(idx >= 0 ? idx : i) % PLAYER_COLORS.length]
                   return (
