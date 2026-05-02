@@ -4,7 +4,6 @@ from app.models.schemas import Player, Room
 
 _rooms: dict[str, Room] = {}
 
-MAX_PLAYERS = 4
 CODE_LENGTH = 6
 
 
@@ -34,11 +33,17 @@ def join_room(room_id: str, player_id: str, display_name: str) -> Room:
         raise ValueError("Room not found")
     if room.status != "waiting":
         raise ValueError("Room is no longer accepting players")
-    if len(room.players) >= MAX_PLAYERS:
-        raise ValueError("Room is full (max 4 players)")
     if any(p.player_id == player_id for p in room.players):
         return room
     room.players.append(Player(player_id=player_id, display_name=display_name))
+    return room
+
+
+def start_room(room_id: str) -> Room | None:
+    room = get_room(room_id)
+    if room is None:
+        return None
+    room.status = "playing"
     return room
 
 

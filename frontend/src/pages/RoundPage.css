@@ -1,0 +1,20 @@
+body:has(.round) {
+  background-color: #FAEEE1;
+  background-image: none;
+}
+
+.round {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100svh;
+  background: linear-gradient(180deg, #F9DCED 0%, #FAEEE1 100%);
+}
+
+.round__label {
+  color: #620437;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 500;
+  opacity: 0.5;
+}
