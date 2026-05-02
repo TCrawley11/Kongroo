@@ -226,6 +226,12 @@ body:has(.round) #root {
   font-weight: 600;
 }
 
+.round__timer {
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 14px;
+  transition: opacity 0.3s, font-weight 0.3s;
+}
+
 .round__done-wrap {
   border-radius: 8px;
   border: 4px solid;

@@ -38,9 +38,11 @@ export default function RoundPage() {
   const [text, setText] = useState('')
   const [phase, setPhase] = useState('playing')
   const [panelIndex, setPanelIndex] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(30)
 
   const wsRef = useRef(null)
   const feedEndRef = useRef(null)
+  const textRef = useRef('')
 
   const myIdx = players.findIndex(p => p.player_id === playerId)
   const myColor = PLAYER_COLORS[(myIdx >= 0 ? myIdx : 0) % PLAYER_COLORS.length]
@@ -51,6 +53,9 @@ export default function RoundPage() {
 
   const words = wordCount(text)
   const overLimit = words > 20
+
+  // Keep ref in sync so timer closure always reads latest text
+  textRef.current = text
 
   useEffect(() => {
     if (!roomId) return
@@ -90,6 +95,25 @@ export default function RoundPage() {
 
     return () => ws.close()
   }, [roomId, playerId])
+
+  useEffect(() => {
+    if (!isMyTurn) { setTimeLeft(30); return }
+    setTimeLeft(30)
+    const id = setInterval(() => {
+      setTimeLeft(prev => {
+        if (prev <= 1) {
+          clearInterval(id)
+          const trimmed = textRef.current.trim()
+          if (wsRef.current?.readyState === WebSocket.OPEN) {
+            wsRef.current.send(JSON.stringify({ type: 'submit_sentence', text: trimmed || '…' }))
+          }
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+    return () => clearInterval(id)
+  }, [isMyTurn])
 
   useEffect(() => {
     feedEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -257,6 +281,12 @@ export default function RoundPage() {
                       style={{ color: myColor.accent, opacity: overLimit ? 1 : 0.45 }}
                     >
                       {words} / 20 words{overLimit && ' — too long!'}
+                    </span>
+                    <span
+                      className="round__timer"
+                      style={{ color: myColor.accent, opacity: timeLeft <= 10 ? 1 : 0.45, fontWeight: timeLeft <= 10 ? 700 : 500 }}
+                    >
+                      {timeLeft}s
                     </span>
                     <div className="round__done-wrap" style={{ borderColor: myColor.accent }}>
                       <button

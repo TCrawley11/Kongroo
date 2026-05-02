@@ -149,5 +149,7 @@ async def room_ws(
 
     except WebSocketDisconnect:
         _connections.get(room_id.upper(), {}).pop(player_id, None)
-        room_manager.remove_player(room_id, player_id)
+        room = room_manager.get_room(room_id)
+        if room and room.status != "playing":
+            room_manager.remove_player(room_id, player_id)
         await _broadcast_room_update(room_id)
