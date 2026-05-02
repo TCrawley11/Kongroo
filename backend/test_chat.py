@@ -20,6 +20,13 @@ expressive and emotionally resonant with the story's current tone. \
 Do NOT render any text, speech bubbles, or UI elements inside the image itself.\
 """
 
+def build_image_prompt(story_text: str) -> str:
+    return (
+        "Create a visual novel scene illustration for the following collaborative story. "
+        "Capture the setting, mood, and key dramatic moment described.\n\n"
+        f"Story:\n{story_text}"
+    )
+
 def main():
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -46,10 +53,11 @@ def main():
             if not prompt.strip():
                 continue
 
-            # Add user prompt to history
+            # Add wrapped user prompt to history
+            wrapped_prompt = build_image_prompt(prompt)
             history.append(types.Content(
                 role="user",
-                parts=[types.Part(text=prompt)]
+                parts=[types.Part(text=wrapped_prompt)]
             ))
 
             print(f"⏳ Generating image for turn {turn}...")
