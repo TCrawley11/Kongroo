@@ -38,9 +38,12 @@ export default function LobbyPage() {
   const messagesEndRef = useRef(null)
 
   useEffect(() => {
-    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    const apiBase = import.meta.env.VITE_API_URL ?? ''
+    const wsBase = apiBase
+      ? apiBase.replace(/^http/, 'ws')
+      : `${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`
     const ws = new WebSocket(
-      `${proto}//${window.location.host}/ws/${roomId}?player_id=${encodeURIComponent(playerId)}`
+      `${wsBase}/ws/${roomId}?player_id=${encodeURIComponent(playerId)}`
     )
     wsRef.current = ws
 

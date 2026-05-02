@@ -4,6 +4,8 @@ import NamePicker from '../components/NamePicker'
 import homeArt from '../assets/images/home_art.webp'
 import './HomePage.css'
 
+const API_BASE = import.meta.env.VITE_API_URL ?? ''
+
 function getOrCreatePlayerId() {
   let id = sessionStorage.getItem('kongroo_player_id')
   if (!id) {
@@ -26,12 +28,13 @@ export default function HomePage() {
     setLoading(true)
     try {
       const playerId = getOrCreatePlayerId()
-      const res = await fetch('/api/rooms', {
+      const res = await fetch(`${API_BASE}/api/rooms`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerId, display_name: authorName }),
       })
       if (!res.ok) throw new Error('Failed to create room')
+
       const { room_id } = await res.json()
       navigate(`/lobby/${room_id}`, { state: { authorName, playerId } })
     } catch {
@@ -46,7 +49,7 @@ export default function HomePage() {
     setLoading(true)
     try {
       const playerId = getOrCreatePlayerId()
-      const res = await fetch(`/api/rooms/${code}/join`, {
+      const res = await fetch(`${API_BASE}/api/rooms/${code}/join`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ player_id: playerId, display_name: authorName }),

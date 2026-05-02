@@ -12,10 +12,13 @@ from app.routes.ws import router as ws_router
 
 app = FastAPI(title="Kongroo Image Generation API")
 
+frontend_url = os.environ.get("FRONTEND_URL", "*")
+origins = ["*"] if frontend_url == "*" else [o.strip() for o in frontend_url.split(",")]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.environ.get("FRONTEND_URL", "*")],
-    allow_methods=["POST", "GET"],
+    allow_origins=origins,
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
