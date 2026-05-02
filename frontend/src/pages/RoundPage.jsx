@@ -193,15 +193,16 @@ export default function RoundPage() {
                 Painting the scene…
               </div>
             )}
+
+            <div className="round__vn-textbox" style={{ borderColor: accent }}>
+              <p className="round__vn-author" style={{ color: accent }}>
+                {panel?.player_name}
+              </p>
+              <p className="round__vn-text">
+                {panel?.text}
+              </p>
+            </div>
           </div>
-
-          <p className="round__panel-author" style={{ color: accent }}>
-            {panel?.player_name}
-          </p>
-
-          <p className="round__panel-text" style={{ color: accent }}>
-            "{panel?.text}"
-          </p>
 
           <div className="round__panel-nav">
             <div className="round__panel-btn-wrap" style={{ borderColor: accent, opacity: isFirst ? 0.3 : 1 }}>
