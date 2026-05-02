@@ -1,20 +1,377 @@
 body:has(.round) {
   background-color: #FAEEE1;
   background-image: none;
+  overflow: hidden;
 }
+
+body:has(.round) #root {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* ── Shared wrapper ─────────────────────────────────────────────────── */
 
 .round {
   display: flex;
+  flex-direction: column;
+  min-height: 100svh;
+  background: linear-gradient(180deg, #F9DCED 0%, #FAEEE1 100%);
+  transition: background 0.5s;
+}
+
+.round__body {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  padding: 12px 40px;
+  min-height: 0;
+}
+
+.round__main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 960px;
+  min-height: 0;
+}
+
+/* ── Hero ───────────────────────────────────────────────────────────── */
+
+.round__hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.round__logo-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.round__title {
+  color: #620437;
+  text-shadow: 0 3px 0 #FCBADE;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 32px;
+  font-weight: 500;
+  letter-spacing: -1.28px;
+  margin: 0;
+}
+
+.round__tagline {
+  margin: 0;
+  color: #620437;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  opacity: 0.7;
+}
+
+/* ── Content row ────────────────────────────────────────────────────── */
+
+.round__content-row {
+  display: flex;
+  align-items: stretch;
+  gap: 23px;
+  width: 100%;
+  margin-top: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* ── Player list ────────────────────────────────────────────────────── */
+
+.round__players {
+  width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  overflow-y: auto;
+  align-content: flex-start;
+}
+
+.round__player-card {
+  display: flex;
+  height: 66px;
+  padding: 0 16px;
+  align-items: center;
+  gap: 10px;
+  align-self: stretch;
+  border-radius: 100px 4px 4px 100px;
+  box-sizing: border-box;
+  transition: box-shadow 0.25s;
+}
+
+.round__player-card--turn {
+  box-shadow: 0 0 0 3px #62043766, 0 4px 16px #62043733;
+}
+
+.round__player-card--done {
+  opacity: 0.6;
+}
+
+.round__player-name {
+  flex: 1;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.round__player-check,
+.round__player-arrow {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Game column (story feed + write area) ──────────────────────────── */
+
+.round__game-col {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: 4px;
+  border: 4px solid #FB9DD0;
+  overflow: hidden;
+  transition: border-color 0.3s;
+  max-height: 458px;
+}
+
+.round__story-feed {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 18px;
+  background: #F8D5E8;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.round__feed-empty {
+  margin: 0;
+  color: #620437;
+  opacity: 0.4;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.round__sentence {
+  border-radius: 6px;
+  border: 3px solid;
+  padding: 8px 14px;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.round__sentence-author {
+  font-weight: 700;
+}
+
+.round__sentence-text {
+  font-weight: 500;
+}
+
+/* ── Writing panel ──────────────────────────────────────────────────── */
+
+.round__write {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-top: 3px solid;
+}
+
+.round__textarea {
+  padding: 12px 16px;
+  background: transparent;
+  border: none;
+  outline: none;
+  resize: none;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 500;
+  line-height: 1.5;
+  width: 100%;
+  height: 80px;
+  box-sizing: border-box;
+
+  &::placeholder {
+    opacity: 0.4;
+  }
+}
+
+.round__write-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px 10px;
+}
+
+.round__word-count {
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.round__done-wrap {
+  border-radius: 8px;
+  border: 4px solid;
+  transition: opacity 0.2s;
+
+  &:has(button:not(:disabled)):hover {
+    opacity: 0.85;
+  }
+
+  &:has(button:disabled) {
+    opacity: 0.4;
+  }
+}
+
+.round__done {
+  display: flex;
+  height: 46px;
+  padding: 0 20px;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  border-radius: 4px;
+  border: none;
+  border-bottom: 6px solid #FAE685;
+  background: #FCF1BA;
+  cursor: pointer;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  box-sizing: border-box;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.round__waiting {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 68px;
+  border-top: 3px solid;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+/* ── Footer tagline ─────────────────────────────────────────────────── */
+
+.round__footer-tagline {
+  margin: 0;
+  color: #000;
+  text-align: center;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.96px;
+  padding-top: 4px;
+}
+
+/* ── Playback (manga panel) ─────────────────────────────────────────── */
+
+.round--playback {
   align-items: center;
   justify-content: center;
   min-height: 100svh;
-  background: linear-gradient(180deg, #F9DCED 0%, #FAEEE1 100%);
 }
 
-.round__label {
-  color: #620437;
+.round__panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  max-width: 580px;
+  width: 100%;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.round__panel-dots {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.round__panel-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, background 0.2s;
+
+  &.round__panel-dot--active {
+    transform: scale(1.4);
+  }
+}
+
+.round__panel-author {
+  margin: 0;
   font-family: 'Geologica', system-ui, sans-serif;
   font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.round__panel-text {
+  margin: 0;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 28px;
   font-weight: 500;
-  opacity: 0.5;
+  line-height: 1.45;
+  letter-spacing: -0.8px;
+}
+
+.round__panel-nav {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.round__panel-btn-wrap {
+  border-radius: 8px;
+  border: 4px solid;
+  transition: opacity 0.2s;
+}
+
+.round__panel-btn {
+  display: flex;
+  height: 54px;
+  padding: 0 28px;
+  justify-content: center;
+  align-items: center;
+  border-radius: 4px;
+  border: none;
+  border-bottom: 6px solid #FAE685;
+  background: #FCF1BA;
+  cursor: pointer;
+  font-family: 'Geologica', system-ui, sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  box-sizing: border-box;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
 }

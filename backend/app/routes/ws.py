@@ -7,6 +7,9 @@ router = APIRouter()
 # room_id -> { player_id -> WebSocket }
 _connections: dict[str, dict[str, WebSocket]] = {}
 
+# room_id -> { turn_index, player_ids, submissions, players_data }
+_game_state: dict[str, dict] = {}
+
 
 async def _broadcast(room_id: str, payload: dict) -> None:
     conns = _connections.get(room_id.upper(), {})
@@ -44,6 +47,21 @@ async def room_ws(
 
     await _broadcast_room_update(room_id)
 
+    # Reconnect: send current game state if a round is in progress
+    game = _game_state.get(room_id.upper())
+    if game:
+        current_id = (
+            game["player_ids"][game["turn_index"]]
+            if game["turn_index"] < len(game["player_ids"])
+            else None
+        )
+        await websocket.send_json({
+            "type": "game_state_update",
+            "current_player_id": current_id,
+            "submissions": game["submissions"],
+            "players": game["players_data"],
+        })
+
     try:
         while True:
             raw = await websocket.receive_text()
@@ -72,9 +90,62 @@ async def room_ws(
                 if room is None:
                     continue
                 host = next((p for p in room.players if p.is_host), None)
-                if host and host.player_id == player_id:
-                    room_manager.start_room(room_id)
-                    await _broadcast(room_id, {"type": "game_started"})
+                if not (host and host.player_id == player_id):
+                    continue
+                room_manager.start_room(room_id)
+                room = room_manager.get_room(room_id)
+                player_ids = [p.player_id for p in room.players]
+                players_data = [
+                    {"player_id": p.player_id, "display_name": p.display_name, "is_host": p.is_host}
+                    for p in room.players
+                ]
+                _game_state[room_id.upper()] = {
+                    "turn_index": 0,
+                    "player_ids": player_ids,
+                    "submissions": [],
+                    "players_data": players_data,
+                }
+                await _broadcast(room_id, {
+                    "type": "game_started",
+                    "current_player_id": player_ids[0] if player_ids else None,
+                    "players": players_data,
+                })
+
+            elif kind == "submit_sentence":
+                game = _game_state.get(room_id.upper())
+                if not game or game["turn_index"] >= len(game["player_ids"]):
+                    continue
+                if game["player_ids"][game["turn_index"]] != player_id:
+                    continue
+
+                text = str(data.get("text", ""))[:300].strip()
+                if not text:
+                    continue
+
+                room = room_manager.get_room(room_id)
+                player_name = next(
+                    (p.display_name for p in (room.players if room else []) if p.player_id == player_id),
+                    "Unknown",
+                )
+                game["submissions"].append({
+                    "player_id": player_id,
+                    "player_name": player_name,
+                    "text": text,
+                })
+                game["turn_index"] += 1
+
+                if game["turn_index"] >= len(game["player_ids"]):
+                    await _broadcast(room_id, {
+                        "type": "game_complete",
+                        "submissions": game["submissions"],
+                    })
+                    _game_state.pop(room_id.upper(), None)
+                else:
+                    await _broadcast(room_id, {
+                        "type": "turn_update",
+                        "current_player_id": game["player_ids"][game["turn_index"]],
+                        "submissions": game["submissions"],
+                    })
 
     except WebSocketDisconnect:
         _connections.get(room_id.upper(), {}).pop(player_id, None)

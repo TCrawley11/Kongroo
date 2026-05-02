@@ -65,7 +65,15 @@ export default function LobbyPage() {
           setMessages((prev) => [...prev, { username: msg.username, message: msg.message }])
           break
         case 'game_started':
-          navigate('/round', { state: { roomId } })
+          navigate('/round', {
+            state: {
+              roomId,
+              playerId,
+              authorName,
+              currentPlayerId: msg.current_player_id,
+              players: msg.players,
+            },
+          })
           break
       }
     }
