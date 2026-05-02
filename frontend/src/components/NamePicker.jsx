@@ -3,9 +3,6 @@ import './NamePicker.css'
 export default function NamePicker({ value, onChange }) {
   return (
     <div className="name-picker">
-      <label className="name-picker__label" htmlFor="author-name">
-        Choose your author name
-      </label>
       <input
         id="author-name"
         className="name-picker__input"
